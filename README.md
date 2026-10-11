@@ -16,7 +16,7 @@ It's plain HTML/CSS/JS, no build step.
 1. Create a repo and push these files to the root of the `main` branch.
 2. Repo **Settings > Pages**, source `main` / root.
 3. Open the Pages URL on your phone and use **Add to Home Screen** (iOS Safari) or **Install app** (Chrome on Android).
-
+4. https://necero71.github.io/MKNav/
 After the first load it works with no signal.
 
 ## Updating
