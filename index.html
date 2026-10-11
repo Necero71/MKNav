@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b1f13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MK NAVKIT">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>MK NAVKIT</title>
+<style>
+:root {
+  --bg: #1b1f13;
+  --panel: #262b1a;
+  --panel-2: #2f3520;
+  --olive: #5b6b2f;
+  --olive-hi: #7d9140;
+  --coyote: #8a6a43;
+  --tan: #cdb98c;
+  --tan-dim: #9c8d6a;
+  --warn: #c9622f;
+  --line: #3b422a;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --cut: 12px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--tan); font-family: var(--sans); }
+body {
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) 0 calc(72px + env(safe-area-inset-bottom));
+  background-image:
+    linear-gradient(45deg, rgba(255,255,255,.015) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.015) 50%, rgba(255,255,255,.015) 75%, transparent 75%);
+  background-size: 24px 24px;
+}
+header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px 12px;
+  border-bottom: 2px solid var(--olive);
+  background: var(--bg);
+  position: sticky; top: 0; z-index: 5;
+}
+.logo { width: 34px; height: 34px; flex: none; }
+.brand { font-family: var(--mono); font-weight: 800; letter-spacing: .18em; font-size: 15px; color: var(--tan); }
+.brand small { display: block; font-weight: 500; letter-spacing: .14em; font-size: 10px; color: var(--tan-dim); margin-top: 2px; }
+.stripe { margin-left: auto; width: 54px; height: 14px;
+  background: repeating-linear-gradient(135deg, var(--coyote) 0 6px, transparent 6px 12px); }
+
+main { max-width: 560px; margin: 0 auto; padding: 14px 14px 24px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+h2 { font-family: var(--mono); font-size: 12px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--olive-hi); margin: 18px 0 8px; display: flex; align-items: center; gap: 8px; }
+h2::before { content: ""; width: 10px; height: 10px; background: var(--olive-hi); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+h2:first-child { margin-top: 4px; }
+
+.card {
+  background: var(--panel); border: 1px solid var(--line);
+  padding: 14px; margin-bottom: 12px;
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+}
+.row { display: grid; gap: 10px; margin-bottom: 10px; }
+.row.two { grid-template-columns: 1fr 1fr; }
+.row:last-child { margin-bottom: 0; }
+
+label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--tan-dim); margin-bottom: 4px; }
+input, select, button { font: inherit; }
+input[type=text], input[type=number], input[type=search], select {
+  width: 100%; min-height: 46px; padding: 8px 10px;
+  background: var(--bg); color: var(--tan);
+  border: 1px solid var(--line); border-bottom: 2px solid var(--olive);
+  border-radius: 0; font-family: var(--mono); font-size: 18px;
+  appearance: none; -webkit-appearance: none;
+}
+select { background-image: linear-gradient(45deg, transparent 50%, var(--tan-dim) 50%), linear-gradient(135deg, var(--tan-dim) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 20px, calc(100% - 12px) 20px; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 30px; font-size: 15px; }
+input:focus, select:focus { outline: none; border-color: var(--olive-hi); border-bottom-color: var(--tan); }
+input.bad { border-bottom-color: var(--warn); }
+
+button {
+  min-height: 46px; padding: 8px 14px; cursor: pointer;
+  background: var(--olive); color: #eef0dc; border: 0; border-radius: 0;
+  font-family: var(--mono); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 12px;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+button:active { background: var(--olive-hi); }
+button.ghost { background: var(--panel-2); color: var(--tan); border: 0; }
+button.danger { background: #6b3a22; }
+
+.out { display: grid; gap: 8px; }
+.res { background: var(--panel-2); padding: 10px 12px; border-left: 4px solid var(--coyote); cursor: pointer; position: relative; }
+.res .k { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--tan-dim); }
+.res .v { font-family: var(--mono); font-size: 28px; font-weight: 800; color: var(--tan); line-height: 1.15; word-break: break-word; }
+.res .v small { font-size: 13px; font-weight: 500; color: var(--tan-dim); margin-left: 4px; }
+.res.big .v { font-size: 38px; color: #e8d9ae; }
+.res.copied { border-left-color: var(--olive-hi); }
+.res.copied::after { content: "COPIED"; position: absolute; right: 10px; top: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--olive-hi); }
+.out.two { grid-template-columns: 1fr 1fr; }
+
+.hint { font-size: 12px; color: var(--tan-dim); line-height: 1.45; margin: 8px 0 0; }
+.err { font-family: var(--mono); font-size: 12px; color: var(--warn); min-height: 16px; margin-top: 6px; }
+
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.chip { min-height: 36px; padding: 6px 12px; font-size: 11px; background: var(--panel-2); color: var(--tan); clip-path: none; border: 1px solid var(--line); }
+.chip.on { background: var(--coyote); color: #fff; border-color: var(--coyote); }
+
+table { width: 100%; border-collapse: collapse; font-family: var(--mono); }
+th { text-align: left; font-size: 10px; letter-spacing: .14em; color: var(--tan-dim); text-transform: uppercase; padding: 4px 6px 6px; border-bottom: 1px solid var(--line); }
+td { padding: 9px 6px; border-bottom: 1px solid var(--line); font-size: 16px; }
+td.act { width: 44px; text-align: right; }
+td button { min-height: 34px; padding: 4px 10px; font-size: 14px; background: transparent; color: var(--warn); clip-path: none; }
+.empty { text-align: center; color: var(--tan-dim); font-size: 13px; padding: 14px 0 4px; }
+
+nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  background: var(--bg); border-top: 2px solid var(--olive);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+nav button {
+  min-height: 62px; background: transparent; color: var(--tan-dim);
+  clip-path: none; font-size: 10px; letter-spacing: .1em; padding: 6px 2px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+}
+nav button svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: square; }
+nav button.active { color: var(--tan); background: var(--panel); box-shadow: inset 0 3px 0 var(--coyote); }
+
+@media (min-width: 700px) { main { padding-top: 22px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+    <rect width="64" height="64" fill="#2f3520"/>
+    <path d="M8 40 L32 14 L56 40 L56 50 L32 26 L8 50 Z" fill="#7d9140"/>
+    <path d="M8 52 L32 28 L56 52 L56 60 L32 36 L8 60 Z" fill="#8a6a43"/>
+  </svg>
+  <div class="brand">MK NAVKIT<small>REFORGER FIELD COMPANION</small></div>
+  <div class="stripe"></div>
+</header>
+
+<main>
+
+  <!-- RANGE -->
+  <section class="panel active" id="p-range">
+    <h2>Mil range estimate</h2>
+    <div class="card">
+      <div class="chips" id="tgtChips"></div>
+      <div class="row two">
+        <div><label for="size">Target size (m)</label><input id="size" type="number" inputmode="decimal" step="0.1" value="1.8"></div>
+        <div><label for="mils">Measured (mils)</label><input id="mils" type="number" inputmode="decimal" step="0.1" placeholder="e.g. 6"></div>
+      </div>
+      <div class="out">
+        <div class="res big" data-copy><div class="k">Range</div><div class="v" id="rangeOut">--</div></div>
+      </div>
+      <p class="hint">Range = size &times; 1000 &divide; mils. Presets are rough sizes, so tweak the size field if you know better. Tap a result to copy.</p>
+    </div>
+
+    <h2>Expected mils</h2>
+    <div class="card">
+      <div class="row two">
+        <div><label for="exSize">Target size (m)</label><input id="exSize" type="number" inputmode="decimal" step="0.1" value="1.8"></div>
+        <div><label for="exRange">Range (m)</label><input id="exRange" type="number" inputmode="decimal" placeholder="e.g. 300"></div>
+      </div>
+      <div class="out">
+        <div class="res" data-copy><div class="k">Target should measure</div><div class="v" id="exOut">--</div></div>
+      </div>
+    </div>
+
+    <h2>Lead / offset</h2>
+    <div class="card">
+      <div class="row two">
+        <div><label for="offMils">Mils</label><input id="offMils" type="number" inputmode="decimal" step="0.1" placeholder="e.g. 2"></div>
+        <div><label for="offRange">Range (m)</label><input id="offRange" type="number" inputmode="decimal" placeholder="e.g. 400"></div>
+      </div>
+      <div class="out">
+        <div class="res" data-copy><div class="k">Distance covered</div><div class="v" id="offOut">--</div></div>
+      </div>
+      <p class="hint">How far sideways a number of mils is at that range. Handy for lead and for correcting off a spotted impact.</p>
+    </div>
+  </section>
+
+  <!-- GRID -->
+  <section class="panel" id="p-grid">
+    <h2>Grid to grid</h2>
+    <div class="card">
+      <div class="row two">
+        <div><label for="gA">From grid</label><input id="gA" type="text" inputmode="numeric" autocomplete="off" placeholder="123 456"></div>
+        <div><label for="gB">To grid</label><input id="gB" type="text" inputmode="numeric" autocomplete="off" placeholder="130 470"></div>
+      </div>
+      <div class="row"><button class="ghost" id="swapBtn">Swap A / B</button></div>
+      <div class="err" id="gErr"></div>
+      <div class="out two">
+        <div class="res big" data-copy><div class="k">Distance</div><div class="v" id="gDist">--</div></div>
+        <div class="res big" data-copy><div class="k">Bearing</div><div class="v" id="gDeg">--</div></div>
+        <div class="res" data-copy><div class="k">Bearing (mils)</div><div class="v" id="gMils">--</div></div>
+        <div class="res" data-copy><div class="k">Back bearing</div><div class="v" id="gBack">--</div></div>
+      </div>
+      <p class="hint">Use 4, 6, 8 or 10 digits. Six digits is the usual map read (3 easting + 3 northing, 100 m precision). Bearings are grid bearings, 0&deg; = north.</p>
+    </div>
+  </section>
+
+  <!-- PLOT -->
+  <section class="panel" id="p-plot">
+    <h2>Plot a contact</h2>
+    <div class="card">
+      <div class="row"><div><label for="pG">Your grid</label><input id="pG" type="text" inputmode="numeric" autocomplete="off" placeholder="123 456"></div></div>
+      <div class="row two">
+        <div><label for="pBrg">Bearing</label><input id="pBrg" type="number" inputmode="decimal" placeholder="e.g. 85"></div>
+        <div><label for="pUnit">Unit</label>
+          <select id="pUnit"><option value="deg">Degrees</option><option value="mils">Mils (6400)</option></select></div>
+      </div>
+      <div class="row"><div><label for="pDist">Distance (m)</label><input id="pDist" type="number" inputmode="decimal" placeholder="e.g. 450"></div></div>
+      <div class="err" id="pErr"></div>
+      <div class="out two">
+        <div class="res big" data-copy><div class="k">Target (6-digit)</div><div class="v" id="pOut6">--</div></div>
+        <div class="res big" data-copy><div class="k">Target (8-digit)</div><div class="v" id="pOut8">--</div></div>
+      </div>
+      <div class="row" style="margin-top:10px"><button class="ghost" id="toGridBtn">Send to Grid tab as "To"</button></div>
+      <p class="hint">Stand at your grid, shoot a bearing and range to the enemy, and read off where to call it in. Pair it with the Range tab for the distance.</p>
+    </div>
+  </section>
+
+  <!-- PACE -->
+  <section class="panel" id="p-pace">
+    <h2>Pace count</h2>
+    <div class="card">
+      <div class="row">
+        <div><label for="ppm">Your paces per 100 m</label><input id="ppm" type="number" inputmode="decimal" step="1" value="62"></div>
+      </div>
+      <div class="row two">
+        <div><label for="pcDist">Distance (m)</label><input id="pcDist" type="number" inputmode="decimal" placeholder="e.g. 500"></div>
+        <div><label for="pcPaces">Paces counted</label><input id="pcPaces" type="number" inputmode="decimal" placeholder="e.g. 310"></div>
+      </div>
+      <div class="out two">
+        <div class="res" data-copy><div class="k">Paces needed</div><div class="v" id="pcNeed">--</div></div>
+        <div class="res" data-copy><div class="k">Distance walked</div><div class="v" id="pcWalked">--</div></div>
+      </div>
+      <p class="hint">Calibrate once: count your paces over a known 100 m on a flat road, then save it here. Change it for uphill or sprinting.</p>
+    </div>
+
+    <h2>Travel time</h2>
+    <div class="card">
+      <div class="row">
+        <div><label for="etaDist">Distance (m)</label><input id="etaDist" type="number" inputmode="decimal" placeholder="e.g. 1500"></div>
+      </div>
+      <div class="row two">
+        <div><label for="spWalk">Walk (km/h)</label><input id="spWalk" type="number" inputmode="decimal" value="5"></div>
+        <div><label for="spJog">Sprint/jog (km/h)</label><input id="spJog" type="number" inputmode="decimal" value="12"></div>
+        <div><label for="spVeh">Vehicle (km/h)</label><input id="spVeh" type="number" inputmode="decimal" value="35"></div>
+        <div><label for="spCustom">Custom (km/h)</label><input id="spCustom" type="number" inputmode="decimal" value="20"></div>
+      </div>
+      <div class="out two">
+        <div class="res" data-copy><div class="k">Walk</div><div class="v" id="etaWalk">--</div></div>
+        <div class="res" data-copy><div class="k">Sprint/jog</div><div class="v" id="etaJog">--</div></div>
+        <div class="res" data-copy><div class="k">Vehicle</div><div class="v" id="etaVeh">--</div></div>
+        <div class="res" data-copy><div class="k">Custom</div><div class="v" id="etaCustom">--</div></div>
+      </div>
+      <p class="hint">Speeds are placeholders. Time yourself over a known distance in-game and put your real numbers in.</p>
+    </div>
+  </section>
+
+  <!-- CARD -->
+  <section class="panel" id="p-card">
+    <h2>Range card</h2>
+    <div class="card">
+      <div class="row two">
+        <div><label for="rcWeapon">Weapon / optic</label><input id="rcWeapon" type="text" autocomplete="off" placeholder="e.g. M16 + 4x"></div>
+        <div><label for="rcZero">Zero (m)</label><input id="rcZero" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 100"></div>
+      </div>
+      <div class="row two">
+        <div><label for="rcDist">Distance (m)</label><input id="rcDist" type="number" inputmode="decimal" placeholder="300"></div>
+        <div><label for="rcAdj">Adjustment</label><input id="rcAdj" type="text" autocomplete="off" placeholder="e.g. +2 clicks"></div>
+      </div>
+      <div class="row two">
+        <button id="rcAdd">Add entry</button>
+        <button class="danger" id="rcClear">Clear all</button>
+      </div>
+      <div class="err" id="rcErr"></div>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Dist</th><th>Adjust</th><th></th></tr></thead>
+        <tbody id="rcBody"></tbody>
+      </table>
+      <div class="empty" id="rcEmpty">No entries yet. Log what works at each range as you find it.</div>
+      <div class="row" style="margin-top:12px"><button class="ghost" id="rcCopy">Copy card as text</button></div>
+      <p class="hint">Everything here is saved on this device only. Entries are yours, so nothing is guessed about ballistics.</p>
+    </div>
+  </section>
+
+</main>
+
+<nav id="tabs" aria-label="Tools">
+  <button data-tab="range" class="active">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/></svg>RANGE</button>
+  <button data-tab="grid">
+    <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg>GRID</button>
+  <button data-tab="plot">
+    <svg viewBox="0 0 24 24"><path d="M12 21V8M12 8l-5 5M12 8l5 5M5 4h14"/></svg>PLOT</button>
+  <button data-tab="pace">
+    <svg viewBox="0 0 24 24"><path d="M4 20l6-8 4 4 6-10M4 20h16"/></svg>PACE</button>
+  <button data-tab="card">
+    <svg viewBox="0 0 24 24"><path d="M5 3h14v18H5zM9 8h6M9 12h6M9 16h4"/></svg>CARD</button>
+</nav>
+
+<script src="core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var C = window.NavCore;
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  /* ---------- storage ---------- */
+  var KEY = 'mknav.v1';
+  var store = {};
+  try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { store = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) { /* private mode */ } }
+
+  /* ---------- helpers ---------- */
+  function num(id) { var v = parseFloat($(id).value); return isNaN(v) ? NaN : v; }
+  function setV(id, html) { $(id).innerHTML = html; }
+  function fmt(n, d) { return isFinite(n) ? n.toFixed(d) : '--'; }
+  function dist(n) {
+    if (!isFinite(n)) return '--';
+    if (n >= 1000) return (n / 1000).toFixed(2) + '<small>km</small>';
+    return Math.round(n) + '<small>m</small>';
+  }
+  function deg3(n) { return String(Math.round(n) % 360).padStart(3, '0'); }
+  function mils4(n) { return String(Math.round(n) % 6400).padStart(4, '0'); }
+
+  /* ---------- tabs ---------- */
+  function showTab(name) {
+    $$('.panel').forEach(function (p) { p.classList.toggle('active', p.id === 'p-' + name); });
+    $$('#tabs button').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === name); });
+    store.tab = name; save();
+    window.scrollTo(0, 0);
+  }
+  $('#tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (b) showTab(b.dataset.tab);
+  });
+
+  /* ---------- copy on tap ---------- */
+  document.addEventListener('click', function (e) {
+    var r = e.target.closest('.res[data-copy]'); if (!r) return;
+    var t = r.querySelector('.v').textContent.trim();
+    if (!t || t === '--') return;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).catch(function () {});
+    r.classList.add('copied');
+    setTimeout(function () { r.classList.remove('copied'); }, 900);
+  });
+
+  /* ---------- RANGE ---------- */
+  var TARGETS = [
+    ['Standing', 1.8],
+    ['Kneeling', 1.2],
+    ['Prone', 0.5],
+    ['Car width', 1.8],
+    ['APC width', 2.9],
+    ['Truck height', 3.0]
+  ];
+  var chips = $('#tgtChips');
+  TARGETS.forEach(function (t, i) {
+    var b = document.createElement('button');
+    b.className = 'chip' + (i === 0 ? ' on' : '');
+    b.textContent = t[0];
+    b.addEventListener('click', function () {
+      $$('#tgtChips .chip').forEach(function (c) { c.classList.remove('on'); });
+      b.classList.add('on');
+      $('#size').value = t[1];
+      $('#exSize').value = t[1];
+      calcRange(); calcExpected();
+    });
+    chips.appendChild(b);
+  });
+
+  function calcRange() {
+    var r = C.rangeFromMils(num('#size'), num('#mils'));
+    setV('#rangeOut', isFinite(r) ? Math.round(r) + '<small>m</small>' : '--');
+  }
+  function calcExpected() {
+    var m = C.milsAtRange(num('#exSize'), num('#exRange'));
+    setV('#exOut', isFinite(m) ? fmt(m, 1) + '<small>mils</small>' : '--');
+  }
+  function calcOffset() {
+    var o = C.offsetMetres(num('#offMils'), num('#offRange'));
+    setV('#offOut', isFinite(o) ? fmt(o, 2) + '<small>m</small>' : '--');
+  }
+  ['#size', '#mils'].forEach(function (id) { $(id).addEventListener('input', calcRange); });
+  ['#exSize', '#exRange'].forEach(function (id) { $(id).addEventListener('input', calcExpected); });
+  ['#offMils', '#offRange'].forEach(function (id) { $(id).addEventListener('input', calcOffset); });
+
+  /* ---------- GRID ---------- */
+  function markBad(el, bad) { el.classList.toggle('bad', bad); }
+  function calcGrid() {
+    var aStr = $('#gA').value, bStr = $('#gB').value;
+    var a = C.parseGrid(aStr), b = C.parseGrid(bStr);
+    markBad($('#gA'), !!aStr && !a);
+    markBad($('#gB'), !!bStr && !b);
+    var err = '';
+    if ((aStr && !a) || (bStr && !b)) err = 'Grids need 4, 6, 8 or 10 digits.';
+    $('#gErr').textContent = err;
+    if (!a || !b) {
+      ['#gDist', '#gDeg', '#gMils', '#gBack'].forEach(function (id) { setV(id, '--'); });
+      return;
+    }
+    var r = C.gridToGrid(a, b);
+    setV('#gDist', dist(r.dist));
+    setV('#gDeg', deg3(r.deg) + '<small>&deg;</small>');
+    setV('#gMils', mils4(r.mils) + '<small>mils</small>');
+    var back = C.norm360(r.deg + 180);
+    setV('#gBack', deg3(back) + '<small>&deg;</small>');
+  }
+  ['#gA', '#gB'].forEach(function (id) { $(id).addEventListener('input', calcGrid); });
+  $('#swapBtn').addEventListener('click', function () {
+    var t = $('#gA').value; $('#gA').value = $('#gB').value; $('#gB').value = t; calcGrid();
+  });
+
+  /* ---------- PLOT ---------- */
+  var lastPlot = null;
+  function calcPlot() {
+    var gStr = $('#pG').value;
+    var g = C.parseGrid(gStr);
+    markBad($('#pG'), !!gStr && !g);
+    $('#pErr').textContent = (gStr && !g) ? 'Grid needs 4, 6, 8 or 10 digits.' : '';
+    var brg = num('#pBrg'), d = num('#pDist');
+    lastPlot = null;
+    if (!g || isNaN(brg) || !(d >= 0)) { setV('#pOut6', '--'); setV('#pOut8', '--'); return; }
+    var deg = $('#pUnit').value === 'mils' ? C.milsToDeg(brg) : brg;
+    var p = C.project(g, C.norm360(deg), d);
+    if (p.e < 0 || p.n < 0 || p.e >= 100000 || p.n >= 100000) {
+      $('#pErr').textContent = 'That runs off the edge of the 100 km square.';
+      setV('#pOut6', '--'); setV('#pOut8', '--'); return;
+    }
+    lastPlot = C.formatGrid(p.e, p.n, 4);
+    setV('#pOut6', C.formatGrid(p.e, p.n, 3));
+    setV('#pOut8', lastPlot);
+  }
+  ['#pG', '#pBrg', '#pDist'].forEach(function (id) { $(id).addEventListener('input', calcPlot); });
+  $('#pUnit').addEventListener('change', calcPlot);
+  $('#toGridBtn').addEventListener('click', function () {
+    if (!lastPlot) { $('#pErr').textContent = 'Fill in grid, bearing and distance first.'; return; }
+    $('#gA').value = $('#pG').value;
+    $('#gB').value = lastPlot;
+    calcGrid(); showTab('grid');
+  });
+
+  /* ---------- PACE ---------- */
+  function calcPace() {
+    var ppm = num('#ppm');
+    if (ppm > 0) { store.ppm = ppm; save(); }
+    var need = C.pacesForDistance(num('#pcDist'), ppm);
+    var walked = C.distanceFromPaces(num('#pcPaces'), ppm);
+    setV('#pcNeed', isFinite(need) ? Math.round(need) + '<small>paces</small>' : '--');
+    setV('#pcWalked', isFinite(walked) ? dist(walked) : '--');
+  }
+  ['#ppm', '#pcDist', '#pcPaces'].forEach(function (id) { $(id).addEventListener('input', calcPace); });
+
+  var SPEEDS = [['#spWalk', '#etaWalk', 'walk'], ['#spJog', '#etaJog', 'jog'], ['#spVeh', '#etaVeh', 'veh'], ['#spCustom', '#etaCustom', 'custom']];
+  function calcEta() {
+    var d = num('#etaDist');
+    SPEEDS.forEach(function (s) {
+      var v = num(s[0]);
+      if (v > 0) { store['sp_' + s[2]] = v; }
+      var t = C.travelSeconds(d, v);
+      setV(s[1], isFinite(t) ? C.formatTime(t) : '--');
+    });
+    save();
+  }
+  ['#etaDist'].concat(SPEEDS.map(function (s) { return s[0]; })).forEach(function (id) { $(id).addEventListener('input', calcEta); });
+
+  /* ---------- RANGE CARD ---------- */
+  var card = store.card || { weapon: '', zero: '', rows: [] };
+  function saveCard() { store.card = card; save(); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function renderCard() {
+    card.rows.sort(function (a, b) { return a.d - b.d; });
+    var body = $('#rcBody');
+    body.innerHTML = card.rows.map(function (r, i) {
+      return '<tr><td>' + esc(r.d) + 'm</td><td>' + esc(r.a || '-') + '</td><td class="act"><button data-del="' + i + '" aria-label="Delete entry">&times;</button></td></tr>';
+    }).join('');
+    $('#rcEmpty').style.display = card.rows.length ? 'none' : 'block';
+  }
+  $('#rcWeapon').addEventListener('input', function () { card.weapon = this.value; saveCard(); });
+  $('#rcZero').addEventListener('input', function () { card.zero = this.value; saveCard(); });
+  $('#rcAdd').addEventListener('click', function () {
+    var d = num('#rcDist'), a = $('#rcAdj').value.trim();
+    if (!(d > 0)) { $('#rcErr').textContent = 'Enter a distance.'; return; }
+    if (!a) { $('#rcErr').textContent = 'Enter the adjustment for that distance.'; return; }
+    $('#rcErr').textContent = '';
+    var existing = card.rows.filter(function (r) { return r.d === d; })[0];
+    if (existing) existing.a = a; else card.rows.push({ d: d, a: a });
+    $('#rcDist').value = ''; $('#rcAdj').value = '';
+    saveCard(); renderCard();
+  });
+  $('#rcBody').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-del]'); if (!b) return;
+    card.rows.splice(parseInt(b.dataset.del, 10), 1);
+    saveCard(); renderCard();
+  });
+  $('#rcClear').addEventListener('click', function () {
+    if (!card.rows.length) return;
+    if (confirm('Delete every entry on this range card?')) { card.rows = []; saveCard(); renderCard(); }
+  });
+  $('#rcCopy').addEventListener('click', function () {
+    var lines = [];
+    if (card.weapon) lines.push(card.weapon + (card.zero ? ' | zero ' + card.zero + 'm' : ''));
+    else if (card.zero) lines.push('Zero ' + card.zero + 'm');
+    card.rows.forEach(function (r) { lines.push(r.d + 'm: ' + r.a); });
+    var text = lines.join('\n');
+    if (text && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function () {});
+    var btn = $('#rcCopy'); var old = btn.textContent; btn.textContent = text ? 'Copied' : 'Nothing to copy';
+    setTimeout(function () { btn.textContent = old; }, 900);
+  });
+
+  /* ---------- restore saved state ---------- */
+  if (store.ppm) $('#ppm').value = store.ppm;
+  SPEEDS.forEach(function (s) { if (store['sp_' + s[2]]) $(s[0]).value = store['sp_' + s[2]]; });
+  $('#rcWeapon').value = card.weapon || '';
+  $('#rcZero').value = card.zero || '';
+  renderCard(); calcRange(); calcExpected(); calcOffset(); calcPace(); calcEta();
+  if (store.tab && document.getElementById('p-' + store.tab)) showTab(store.tab);
+
+  /* ---------- service worker ---------- */
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    });
+  }
+})();
+</script>
+</body>
+</html>
