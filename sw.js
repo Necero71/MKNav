@@ -1,6 +1,8 @@
-/* MK NAVKIT service worker: cache-first so the app works offline.
-   Bump CACHE when you change any file so installed copies update. */
-var CACHE = 'mknav-v1';
+/* MK NAVKIT service worker.
+   Stale-while-revalidate: loads instantly from cache (works offline), then quietly
+   refreshes the cache in the background so edits show up on the next launch.
+   Bump CACHE when you add/rename/remove files so old caches get cleared. */
+var CACHE = 'mknav-v2';
 var ASSETS = [
   './',
   './index.html',
@@ -25,16 +27,26 @@ self.addEventListener('activate', function (e) {
 });
 
 self.addEventListener('fetch', function (e) {
-  if (e.request.method !== 'GET') return;
+  var req = e.request;
+  if (req.method !== 'GET') return;
+  if (new URL(req.url).origin !== location.origin) return; // leave cross-origin to the browser
+
   e.respondWith(
-    caches.match(e.request).then(function (hit) {
-      return hit || fetch(e.request).then(function (res) {
-        var copy = res.clone();
-        if (res.ok && new URL(e.request.url).origin === location.origin) {
-          caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
-        }
-        return res;
-      }).catch(function () { return caches.match('./index.html'); });
+    caches.open(CACHE).then(function (cache) {
+      return cache.match(req, { ignoreSearch: true }).then(function (hit) {
+        // 'no-cache' = revalidate with the server instead of trusting Pages' 10 min HTTP cache
+        var network = fetch(req, { cache: 'no-cache' }).then(function (res) {
+          if (res && res.ok) cache.put(req, res.clone());
+          return res;
+        }).catch(function () { return null; });
+
+        if (hit) { e.waitUntil(network); return hit; }
+        return network.then(function (res) {
+          if (res) return res;
+          // Offline + not cached: only fall back to the app shell for page loads
+          return req.mode === 'navigate' ? cache.match('./index.html') : Response.error();
+        });
+      });
     })
   );
 });

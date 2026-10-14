@@ -1,16 +1,25 @@
 {
+  "id": "./",
   "name": "MK NAVKIT - Reforger Field Companion",
   "short_name": "MK NAVKIT",
   "description": "Range, grid, bearing, pace and range-card tools for Arma Reforger.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#1b1f13",
   "theme_color": "#1b1f13",
+  "categories": ["utilities", "games"],
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Range", "url": "./#range" },
+    { "name": "Grid to grid", "url": "./#grid" },
+    { "name": "Plot a contact", "url": "./#plot" },
+    { "name": "Pace count", "url": "./#pace" }
   ]
 }

@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1b1f13">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Offline field companion for Arma Reforger: mil range, grid to grid, plot a contact, pace count and range card.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -27,9 +29,11 @@
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --cut: 12px;
+  color-scheme: dark;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; background: var(--bg); color: var(--tan); font-family: var(--sans); }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html, body { margin: 0; background: var(--bg); color: var(--tan); font-family: var(--sans); overscroll-behavior-y: none; }
 body {
   min-height: 100dvh;
   padding: env(safe-area-inset-top) 0 calc(72px + env(safe-area-inset-bottom));
@@ -78,7 +82,7 @@ input[type=text], input[type=number], input[type=search], select {
   appearance: none; -webkit-appearance: none;
 }
 select { background-image: linear-gradient(45deg, transparent 50%, var(--tan-dim) 50%), linear-gradient(135deg, var(--tan-dim) 50%, transparent 50%);
-  background-position: calc(100% - 18px) 20px, calc(100% - 12px) 20px; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 30px; font-size: 15px; }
+  background-position: calc(100% - 18px) 20px, calc(100% - 12px) 20px; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 30px; font-size: 16px; } /* 16px+ stops iOS zooming in on focus */
 input:focus, select:focus { outline: none; border-color: var(--olive-hi); border-bottom-color: var(--tan); }
 input.bad { border-bottom-color: var(--warn); }
 
@@ -88,7 +92,10 @@ button {
   font-family: var(--mono); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 12px;
   clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
 }
+button { touch-action: manipulation; } /* no double-tap zoom / tap delay */
 button:active { background: var(--olive-hi); }
+/* clip-path would cut an outside outline, so draw it inside */
+button:focus-visible, .res:focus-visible { outline: 2px solid var(--tan); outline-offset: -4px; }
 button.ghost { background: var(--panel-2); color: var(--tan); border: 0; }
 button.danger { background: #6b3a22; }
 
@@ -337,24 +344,59 @@ nav button.active { color: var(--tan); background: var(--panel); box-shadow: ins
   function mils4(n) { return String(Math.round(n) % 6400).padStart(4, '0'); }
 
   /* ---------- tabs ---------- */
+  function hasTab(name) { return !!name && !!document.getElementById('p-' + name); }
   function showTab(name) {
     $$('.panel').forEach(function (p) { p.classList.toggle('active', p.id === 'p-' + name); });
-    $$('#tabs button').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === name); });
+    $$('#tabs button').forEach(function (b) {
+      var on = b.dataset.tab === name;
+      b.classList.toggle('active', on);
+      if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
     store.tab = name; save();
+    try { history.replaceState(null, '', '#' + name); } catch (e) { /* file:// etc */ }
     window.scrollTo(0, 0);
   }
   $('#tabs').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (b) showTab(b.dataset.tab);
   });
+  // Deep links / home-screen shortcuts: index.html#grid
+  window.addEventListener('hashchange', function () {
+    var h = location.hash.slice(1); if (hasTab(h)) showTab(h);
+  });
 
   /* ---------- copy on tap ---------- */
-  document.addEventListener('click', function (e) {
-    var r = e.target.closest('.res[data-copy]'); if (!r) return;
+  function copyText(t) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(t);
+    }
+    return new Promise(function (resolve, reject) { // old-browser fallback
+      var ta = document.createElement('textarea');
+      ta.value = t; ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      ok ? resolve() : reject();
+    });
+  }
+  function copyResult(r) {
     var t = r.querySelector('.v').textContent.trim();
     if (!t || t === '--') return;
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).catch(function () {});
-    r.classList.add('copied');
-    setTimeout(function () { r.classList.remove('copied'); }, 900);
+    copyText(t).then(function () { // only flash COPIED if it really copied
+      r.classList.add('copied');
+      setTimeout(function () { r.classList.remove('copied'); }, 900);
+    }).catch(function () {});
+  }
+  // make result tiles real buttons for keyboard / screen readers
+  $$('.res[data-copy]').forEach(function (r) { r.setAttribute('role', 'button'); r.tabIndex = 0; });
+  document.addEventListener('click', function (e) {
+    var r = e.target.closest('.res[data-copy]'); if (r) copyResult(r);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var r = e.target.closest && e.target.closest('.res[data-copy]');
+    if (r) { e.preventDefault(); copyResult(r); }
   });
 
   /* ---------- RANGE ---------- */
@@ -515,9 +557,10 @@ nav button.active { color: var(--tan); background: var(--panel); box-shadow: ins
     else if (card.zero) lines.push('Zero ' + card.zero + 'm');
     card.rows.forEach(function (r) { lines.push(r.d + 'm: ' + r.a); });
     var text = lines.join('\n');
-    if (text && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function () {});
-    var btn = $('#rcCopy'); var old = btn.textContent; btn.textContent = text ? 'Copied' : 'Nothing to copy';
-    setTimeout(function () { btn.textContent = old; }, 900);
+    var btn = $('#rcCopy'), old = 'Copy card as text';
+    function flash(msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = old; }, 900); }
+    if (!text) { flash('Nothing to copy'); return; }
+    copyText(text).then(function () { flash('Copied'); }).catch(function () { flash('Copy failed'); });
   });
 
   /* ---------- restore saved state ---------- */
@@ -526,7 +569,9 @@ nav button.active { color: var(--tan); background: var(--panel); box-shadow: ins
   $('#rcWeapon').value = card.weapon || '';
   $('#rcZero').value = card.zero || '';
   renderCard(); calcRange(); calcExpected(); calcOffset(); calcPace(); calcEta();
-  if (store.tab && document.getElementById('p-' + store.tab)) showTab(store.tab);
+  var startTab = location.hash.slice(1);
+  if (hasTab(startTab)) showTab(startTab);
+  else if (hasTab(store.tab)) showTab(store.tab);
 
   /* ---------- service worker ---------- */
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {

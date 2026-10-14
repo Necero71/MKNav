@@ -21,7 +21,11 @@ After the first load it works with no signal.
 
 ## Updating
 
-If you edit any file, bump `CACHE` in `sw.js` (`mknav-v1` to `mknav-v2`) so installed copies pick up the change.
+The service worker is stale-while-revalidate: installed copies load instantly from cache, then refresh in the background, so edits show up on the next launch (close and reopen the app once or twice).
+
+Bump `CACHE` in `sw.js` (`mknav-v2` to `mknav-v3`) when you add, rename or remove files, so old caches get cleared and the new file list is precached.
+
+Deep links work: `index.html#grid`, `#plot`, `#pace`, `#card`, `#range`. The manifest uses them for long-press home-screen shortcuts.
 
 ## Notes
 
