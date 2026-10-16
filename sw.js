@@ -2,7 +2,7 @@
    Stale-while-revalidate: loads instantly from cache (works offline), then quietly
    refreshes the cache in the background so edits show up on the next launch.
    Bump CACHE when you add/rename/remove files so old caches get cleared. */
-var CACHE = 'mknav-v2';
+var CACHE = 'mknav-v3';
 var ASSETS = [
   './',
   './index.html',

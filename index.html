@@ -574,7 +574,9 @@ nav button.active { color: var(--tan); background: var(--panel); box-shadow: ins
   else if (hasTab(store.tab)) showTab(store.tab);
 
   /* ---------- service worker ---------- */
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  /* Skip the service worker inside the Android app: the files are already bundled, and a cache layer would fight app updates */
+  var inNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  if ('serviceWorker' in navigator && location.protocol !== 'file:' && !inNativeApp) {
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('sw.js').catch(function () {});
     });

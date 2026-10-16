@@ -1,0 +1,9 @@
+{
+  "appId": "io.github.necero71.mknavkit",
+  "appName": "MK NAVKIT",
+  "webDir": "www",
+  "backgroundColor": "#1b1f13",
+  "android": {
+    "allowMixedContent": false
+  }
+}
